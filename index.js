@@ -21,6 +21,12 @@ app.get('/restart-hook', async (req, res) => {
     res.send("API RUNNING");
 })
 
+app.get('/check-send-message', async (req, res) => {
+    await sendMessage("1566444028748369920", "I love you!");
+    res.send("message sent");
+})
+
+
 app.all('/webhook/twitter', async (request, response) => {
     // Fulfills the CRC check when Twitter sends a CRC challenge
     if (request.query.crc_token) {
