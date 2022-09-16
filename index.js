@@ -1,7 +1,7 @@
 
 const express = require('express');
 const { validateWebhook } = require('twitter-autohook');
-const { startWebHook, endWebHook, secrets } = require('./webhook');
+const { startWebHook, endWebHook, secrets, sendMessage, consumeEvent } = require('./webhook');
 const app = express();
 
 
@@ -28,7 +28,8 @@ app.all('/webhook/twitter', async (request, response) => {
         // Send a successful response to Twitter
         response.sendStatus(200);
         // Add your logic to process the event
-        console.log('Received a webhook event:', request.body);
+        console.log('Received a webhook event:', response.body);
+        await consumeEvent(response.body)
     }
 });
 

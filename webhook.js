@@ -111,7 +111,7 @@ function getInput(recipientID, text) {
 }
 
 // sends ${text} to recipeintID and
-async function sendMessage(recipientID, text) {
+const sendMessage = async (recipientID, text) => {
 
     let header = getHeader(getParameters())
     let body = getInput(recipientID, text);
@@ -153,7 +153,7 @@ async function consumeEvent(event) {
             if (recievedMessage) {
                 console.log("Recieved A Message");
                 let reply = `This is an automated reply. You sent "${messageContent}" to me!`;
-                await sendMessage("1566444028748369920", reply);
+                await sendMessage(messageWasSentBy, reply);
             }
             else {
                 console.log("Sent A Message");
@@ -197,6 +197,8 @@ let endHook = async () => {
 module.exports = {
     startWebHook: startHook,
     endWebHook: endHook,
+    sendMessage: sendMessage,
+    consumeEvent: consumeEvent,
     secrets: {
         consumer_secret: oauth_consumer_secret,
     }
