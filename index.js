@@ -30,7 +30,7 @@ app.all('/webhook/twitter', async (request, response) => {
         // Send a successful response to Twitter
         response.sendStatus(200);
         // Add your logic to process the event
-        console.log('Received a webhook event:', request);
+        console.log('Received a webhook event:', request.body);
         
         // await consumeEvent(request.body)
     }
