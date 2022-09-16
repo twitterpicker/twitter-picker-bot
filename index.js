@@ -22,7 +22,7 @@ app.get('/restart-hook', async (req, res) => {
 })
 
 app.get('/check-send-message', async (req, res) => {
-    await sendMessage("1566444028748369920", "I love you!");
+    await sendMessage("1566444028748369920", "I love you! x 10000");
     res.send("message sent");
 })
 

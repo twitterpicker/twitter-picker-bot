@@ -25,6 +25,7 @@ function generateNonce(length) {
     let chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     var result = '';
     for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    console.log("Generated Nonce" + result);
     return result;
 }
 // returns a timestamp (to be used in authorization process)
@@ -45,6 +46,7 @@ function getParameters() {
         oauth_version: oauth_version,
         oauth_token: oauth_token,
     }
+    console.log(parameters);
     return parameters;
 }
 
@@ -85,6 +87,7 @@ function getEncodedOAuthSignature(parameters) {
         .digest('base64');
 
     let encoded_oauth_signature = encodeURIComponent(ouath_signature);
+    console.log("Signature : " + encoded_oauth_signature);
     return encoded_oauth_signature;
 }
 // returns auth header
@@ -92,6 +95,8 @@ function getHeader(parameters) {
     // signature (calculation)
     let encoded_oauth_signature = getEncodedOAuthSignature(parameters);
     let header = `OAuth oauth_consumer_key="${parameters.oauth_consumer_key}",oauth_token="${parameters.oauth_token}",oauth_signature_method="HMAC-SHA1",oauth_timestamp="${parameters.oauth_timestamp}",oauth_nonce="${parameters.oauth_nonce}",oauth_version="1.0",oauth_signature="${encoded_oauth_signature}"`;
+    
+    console.log("Header + " + header);
     return header;
 }
 // returns input (structured to send text to recipient ID)
@@ -127,6 +132,7 @@ const sendMessage = async (recipientID, text) => {
         },
     };
     request.post(options, (error, response, body) => {
+        console.log(body);
         console.log(response.body);
         console.log(error);
     });
