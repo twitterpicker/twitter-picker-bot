@@ -2,8 +2,10 @@
 const express = require('express');
 const { validateWebhook } = require('twitter-autohook');
 const { startWebHook, endWebHook, secrets, sendMessage, consumeEvent } = require('./webhook');
-const app = express();
+var bodyParser = require('body-parser')
 
+const app = express();
+app.use(bodyParser.json())
 
 const port = process.env.PORT || 3000;
 const baseURL = 'https://embarrassed-dove-coveralls.cyclic.app/';
