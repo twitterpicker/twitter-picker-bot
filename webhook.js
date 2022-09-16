@@ -153,6 +153,7 @@ async function consumeEvent(event) {
             if (recievedMessage) {
                 console.log("Recieved A Message");
                 let reply = `This is an automated reply. You sent "${messageContent}" to me!`;
+                console.log(`sending a reply to : ${messageWasSentBy}`);
                 await sendMessage(messageWasSentBy, reply);
             }
             else {
