@@ -253,7 +253,7 @@ async function consumeEvent(event) {
 
 
 // function, that starts a webhook subscription 
-let startHook = async (isInitial) => {
+let startHook = async (hookInUse) => {
 
     // create autohook instance
     let webhook = new Autohook({
@@ -266,7 +266,7 @@ let startHook = async (isInitial) => {
     });
 
 
-    if (!isInitial) await webhook.removeWebhooks();
+    if (hookInUse === true) await webhook.removeWebhooks();
     await webhook.start();
     await webhook.subscribe({ oauth_token: oauth_token, oauth_token_secret: oauth_token_secret });
 
@@ -276,13 +276,13 @@ let startHook = async (isInitial) => {
 
 let hook;
 
-app.get('/initial', async (req, res) => {
-    await startHook(false);
+app.get('/hook-in-use', async (req, res) => {
+    await startHook(true);
     res.send("API RUNNING");
 })
 
 
-app.get('/remove-hooks', async (req, res) => {
+app.get('/hook-not-in-use', async (req, res) => {
     await startHook(false);
     res.send("API RUNNING");
 })
