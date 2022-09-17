@@ -3,6 +3,7 @@ const express = require('express');
 var bodyParser = require('body-parser')
 const app = express();
 app.use(bodyParser.json())
+const ngrok = require('ngrok');
 
 let { Autohook } = require('twitter-autohook');
 let crypto = require('crypto');
@@ -250,10 +251,12 @@ async function consumeEvent(event) {
 }
 
 
+
 // function, that starts a webhook subscription 
 let startHook = async () => {
 
-    let isError = false; // represents the error state
+    await ngrok.authtoken(ngrok_secret);
+    await ngrok.disconnect();
 
     // create autohook instance
     let webhook = new Autohook({
@@ -265,40 +268,19 @@ let startHook = async () => {
         ngrok_secret: ngrok_secret,
     });
 
-    // SIDENOTE: as the webhook is internally served through a ngrok tunnel
-    // need ngrok_secret for webhook tunnelF to last indefinitely
 
-    try {
-        await webhook.removeWebhooks();
-    }
-    catch (error) {
-        console.log("Webhook still running");
-        isError = true;
-    }
-    // if there is not error in removing the hook (i.e.: no hook was running)
-    if (isError === false) {
+    await webhook.removeWebhooks();
+    await webhook.start();
+    await webhook.subscribe({ oauth_token: oauth_token, oauth_token_secret: oauth_token_secret });
 
-        // call consumer on event
-        webhook.on('event', async (event) => await consumeEvent(event));
-
-        // start and subscribe
-        await webhook.start();
-        await webhook.subscribe({ oauth_token: oauth_token, oauth_token_secret: oauth_token_secret });
-    }
-
+    webhook.on('event', async (event) => await consumeEvent(event));
+    return webhook;
 }
-app.get('/', (req, res) => {
-    res.send("API RUNNING");
-})
 
-app.get('/restart-hook', async (req, res) => {
-    // await endWebHook();
-    try {
-        await startHook();
-    }
-    catch (error) {
-        console.log(error);
-    }
+
+app.get('/initial', async (req, res) => {
+
+    await startHook();
     res.send("API RUNNING");
 })
 

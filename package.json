@@ -23,6 +23,7 @@
     "https": "^1.0.0",
     "kill-port": "^2.0.1",
     "kill-port-process": "^3.1.0",
+    "ngrok": "^4.3.3",
     "request": "^2.88.2",
     "twitter-autohook": "^1.7.2",
     "twitter-webhooks": "^0.3.3",
