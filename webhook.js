@@ -134,12 +134,12 @@ const sendMessage = async (recipientID, text) => {
     console.log("_____________SEND_MESSAGE_____________");
     console.log(text);
     console.log(options);
-    request.post(options, (error, response, body) => {
+    // request.post(options, (error, response, body) => {
 
-        console.log(body);
-        console.log(response.body);
-        console.log(error);
-    });
+    //     console.log(body);
+    //     console.log(response.body);
+    //     console.log(error);
+    // });
 }
 
 
