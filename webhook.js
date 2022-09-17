@@ -121,7 +121,7 @@ const sendMessage = async (recipientID, text) => {
     let header = getHeader(getParameters())
     let body = getInput(recipientID, text);
 
-
+    
     let options = {
         method: method,
         url: send_message_endpoint,
@@ -131,7 +131,11 @@ const sendMessage = async (recipientID, text) => {
             'Content-Type': 'application/json'
         },
     };
+    console.log("_____________SEND_MESSAGE_____________");
+    console.log(text);
+    console.log(options);
     request.post(options, (error, response, body) => {
+
         console.log(body);
         console.log(response.body);
         console.log(error);
