@@ -253,10 +253,7 @@ async function consumeEvent(event) {
 
 
 // function, that starts a webhook subscription 
-let startHook = async () => {
-
-    await ngrok.authtoken(ngrok_secret);
-    await ngrok.disconnect();
+let startHook = async (isInitial) => {
 
     // create autohook instance
     let webhook = new Autohook({
@@ -269,7 +266,7 @@ let startHook = async () => {
     });
 
 
-    await webhook.removeWebhooks();
+    if (!isInitial) await webhook.removeWebhooks();
     await webhook.start();
     await webhook.subscribe({ oauth_token: oauth_token, oauth_token_secret: oauth_token_secret });
 
@@ -277,12 +274,19 @@ let startHook = async () => {
     return webhook;
 }
 
+let hook;
 
 app.get('/initial', async (req, res) => {
-
-    await startHook();
+    await startHook(false);
     res.send("API RUNNING");
 })
+
+
+app.get('/remove-hooks', async (req, res) => {
+    await startHook(false);
+    res.send("API RUNNING");
+})
+
 
 
 app.listen(port, () => {
