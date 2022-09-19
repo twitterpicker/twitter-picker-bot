@@ -303,6 +303,9 @@ app.get('/start', async (req, res) => {
   res.send("API RUNNING");
 })
 
+app.get('/', async (req, res) => {
+  res.send("API PING");
+})
 
 
 
