@@ -9,6 +9,9 @@ let { Autohook } = require('twitter-autohook');
 let crypto = require('crypto');
 const axios = require('axios');
 
+const kill = require('kill-port')
+const detect = require('detect-port');
+
 
 // ________________________ENVIRONMENT_____________________________ //
 let method = 'POST';
@@ -252,8 +255,29 @@ async function consumeEvent(event) {
 
 
 
+
 // function, that starts a webhook subscription 
-let startHook = async (hookInUse) => {
+let startHook = async () => {
+
+    let shouldRUN = await detect(tunnelPORT = 1337);
+    if (shouldRUN !== 1337)
+    {
+        console.log("Killing 1337");
+        await kill(1337, 'tcp');
+    }
+
+    // detect(tunnelPORT = 1337, async (err, _port) => {
+    //     if (err) {
+    //         console.log(err);
+    //     }
+
+    //     if (tunnelPORT == _port) {
+    //         console.log(`port: ${tunnelPORT} was not occupied`);
+    //     } else {
+    //        
+    //         console.log(`port: ${tunnelPORT} was occupied, try port: ${_port}`);
+    //     }
+    // });
 
     // create autohook instance
     let webhook = new Autohook({
@@ -265,27 +289,26 @@ let startHook = async (hookInUse) => {
         ngrok_secret: ngrok_secret,
     });
 
-
-    if (hookInUse === true) await webhook.removeWebhooks();
-    await webhook.start();
-    await webhook.subscribe({ oauth_token: oauth_token, oauth_token_secret: oauth_token_secret });
-
-    webhook.on('event', async (event) => await consumeEvent(event));
+    try {
+        await webhook.removeWebhooks();
+        webhook.on('event', async (event) => await consumeEvent(event));
+        await webhook.start();
+        await webhook.subscribe({ oauth_token: oauth_token, oauth_token_secret: oauth_token_secret });
+    }
+    catch (e) {
+        console.log(e);
+    }
     return webhook;
 }
 
 let hook;
 
-app.get('/hook-in-use', async (req, res) => {
-    await startHook(true);
+app.get('/start', async (req, res) => {
+    await startHook();
     res.send("API RUNNING");
 })
 
 
-app.get('/hook-not-in-use', async (req, res) => {
-    await startHook(false);
-    res.send("API RUNNING");
-})
 
 
 
