@@ -170,11 +170,9 @@ const sendMessage = async (recipientID, text) => {
 
   try {
     let result = await axios.post(send_message_endpoint, body, { headers });
-    console.log(result.data)
   }
   catch (error) {
-    console.log(error.response.data);
-    console.log("error sending data to twitter");
+    console.log(error);
   }
   // return object that represents the request that was made
   return {
@@ -216,7 +214,6 @@ async function getQueriedWinnerInfo(tweetID) {
     }),
   });
   let apiJsonResponse = await apiResponse.json();
-  console.log(apiJsonResponse);
   return apiJsonResponse.message;
 }
 
@@ -233,7 +230,6 @@ async function getGeneratedWinnerInfo(tweetID, requesterID) {
     }),
   });
   let apiJsonResponse = await apiResponse.json();
-  console.log(apiJsonResponse);
   return apiJsonResponse.message;
 }
 
@@ -300,9 +296,6 @@ async function consumeEvent(event) {
           let firstWord = splittedMessage[0]?.toLowerCase();
 
           const tweetID = getTweetID(firstURLOfMessage);
-          console.log(firstWord);
-          console.log(firstURLOfMessage);
-          console.log(tweetID);
           if (firstWord === "pick") {
             let messageInfo = await getGeneratedWinnerInfo(tweetID, messageWasSentBy);
             reply = `${messageInfo}`;
