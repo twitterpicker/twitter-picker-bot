@@ -1,4 +1,3 @@
-
 const express = require('express');
 var bodyParser = require('body-parser')
 const app = express();
@@ -7,6 +6,8 @@ app.use(bodyParser.json())
 let { Autohook } = require('twitter-autohook');
 let crypto = require('crypto');
 const axios = require('axios');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
 
 
 
@@ -27,6 +28,9 @@ let oauth_token = process.env.oauth_token;
 let oauth_token_secret = process.env.oauth_token_secret;
 let oauth_consumer_secret = process.env.oauth_consumer_secret;
 let send_message_endpoint = "https://api.twitter.com/1.1/direct_messages/events/new.json";
+let query_winner_endpoint = "https://twitter-picker.netlify.app/api/get-winner-for-bot";
+let generate_winner_endpoint = "https://twitter-picker.netlify.app/api/generate-winner-for-bot";
+
 
 // should be taken from .env files (TO DO)
 
@@ -180,6 +184,58 @@ const sendMessage = async (recipientID, text) => {
   }
 }
 
+// ______________________CREATE OR FETCH WINNER____________________________________
+
+// regex expression checker for twitter status URL
+const isValidTweetLink = (urlString) => {
+  if (!urlString) return false;
+  var urlPattern = /^https?:\/\/(www.)?(mobile.)?twitter\.com\/(?:#!\/)?(\w+)\/status(es)?\/(\d+)/
+  let isValidUrl = urlString.match(urlPattern);
+  return isValidUrl;
+}
+
+// get tweetID from tweetLink
+function getTweetID(statusLink) {
+  let tweetID = "";
+  let splitted = statusLink.split("/");
+  for (let i = 0; i < splitted.length; i++) {
+    if (splitted[i] === "status" || splitted[i] === "statuses") tweetID = splitted[i + 1];
+  }
+  return tweetID;
+}
+
+async function getQueriedWinnerInfo(tweetID) {
+
+  let apiResponse = await fetch(query_winner_endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      params: {
+        tweetID: tweetID,
+      },
+    }),
+  });
+  let apiJsonResponse = await apiResponse.json();
+  console.log(apiJsonResponse);
+  return apiJsonResponse.message;
+}
+
+async function getGeneratedWinnerInfo(tweetID, requesterID) {
+
+  let apiResponse = await fetch(generate_winner_endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      params: {
+        tweetID: tweetID,
+        requesterID: requesterID,
+      },
+    }),
+  });
+  let apiJsonResponse = await apiResponse.json();
+  console.log(apiJsonResponse);
+  return apiJsonResponse.message;
+}
 
 
 // consumer that handles directing messages 
@@ -193,6 +249,10 @@ async function consumeEvent(event) {
     // if there is a payload
     // in laymen's term : if a message was recieved or sent
     if (message) {
+
+
+
+
 
       // initialize values we care about, with NULL
       let shouldBeSentTo = null;
@@ -219,32 +279,50 @@ async function consumeEvent(event) {
 
       // if there is list of URL's
       if (URLSOfMessage?.length !== 0) {
-
         // get the expanded version of the first URL
         firstURLOfMessage = message.message_data.entities.urls[0].expanded_url;
       }
       // determines if the bot recieved the message payload
       let recievedMessage = (shouldBeSentTo === messageWasSentTo);
 
+      let reply = "not valid message format";
+
       // if bot recieved a message
       if (recievedMessage) {
-        console.log("Recieved A Message");
-        let reply = `This is an automated reply. You sent "${messageContent}" to me! ${Math.random()}`;
-        if (messageContent === "strawberries") reply = "and cigarettes, always test like you";
 
-        // reply to the sender from the BOT
-        await sendMessage(messageWasSentBy, reply);
+        //test
+
+
+
+        // has message text
+        if (isValidTweetLink(firstURLOfMessage) && messageContent && messageContent !== "") {
+          let splittedMessage = messageContent.split(" ");
+          let firstWord = splittedMessage[0]?.toLowerCase();
+
+          const tweetID = getTweetID(firstURLOfMessage);
+          console.log(firstWord);
+          console.log(firstURLOfMessage);
+          console.log(tweetID);
+          if (firstWord === "pick") {
+            let messageInfo = await getGeneratedWinnerInfo(tweetID, messageWasSentBy);
+            reply = `${messageInfo}`;
+            await sendMessage(messageWasSentBy, reply);
+          }
+          else if (firstWord === "view") {
+            let messageInfo = await getQueriedWinnerInfo(tweetID);
+            reply = `${messageInfo}`;
+            // reply to the sender from the BOT
+            await sendMessage(messageWasSentBy, reply);
+          }
+
+        }
+        else {
+          await sendMessage(messageWasSentBy, reply);
+        }
+
       }
       else {
         // test 
-
-        // if I send something to idol bot
-        if (messageWasSentTo === "1001677855661678592") {
-          // send something to picker
-          let sent = await sendMessage("1567795789820481544", "Test by @Bot account");
-          console.log(sent);
-        }
-
         console.log("Sent A message");
       }
     }
@@ -257,24 +335,7 @@ async function consumeEvent(event) {
 // function, that starts a webhook subscription 
 let startHook = async () => {
 
-  // let shouldRUN = await detect(tunnelPORT = 1337);
-  // if (shouldRUN !== 1337) {
-  //   console.log("Killing 1337");
-  //   await kill(1337, 'tcp');
-  // }
 
-  // detect(tunnelPORT = 1337, async (err, _port) => {
-  //     if (err) {
-  //         console.log(err);
-  //     }
-
-  //     if (tunnelPORT == _port) {
-  //         console.log(`port: ${tunnelPORT} was not occupied`);
-  //     } else {
-  //        
-  //         console.log(`port: ${tunnelPORT} was occupied, try port: ${_port}`);
-  //     }
-  // });
 
   // create autohook instance
   let webhook = new Autohook({
@@ -310,7 +371,8 @@ app.get('/', async (req, res) => {
 
 
 
-app.listen(port, () => {
+app.listen(port, async () => {
+  await startHook();
   console.log(`Example app listening on port ${port}`)
 })
 
