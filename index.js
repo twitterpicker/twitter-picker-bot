@@ -1,8 +1,8 @@
+// necessary imports for the BOT (Uses commonJS syntax)
 const express = require('express');
 var bodyParser = require('body-parser')
 const app = express();
 app.use(bodyParser.json())
-
 let { Autohook } = require('twitter-autohook');
 let crypto = require('crypto');
 const axios = require('axios');
@@ -13,6 +13,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 
 // ________________________ENVIRONMENT_____________________________ //
+// stores the important environmental values for the requests to be made
 let method = 'POST';
 let oauth_version = "1.0";
 let oauth_timestamp = null;
@@ -22,6 +23,8 @@ let oauth_signature_method = "HMAC-SHA1";
 
 
 // ________________________SECRETS_&_TOKENS_____________________________ //
+// stores (uses) the secrets from api providers
+// stres the api endpoints
 let oauth_consumer_key = process.env.oauth_consumer_key;
 let ngrok_secret = process.env.ngrok_secret;
 let oauth_token = process.env.oauth_token;
@@ -32,9 +35,7 @@ let query_winner_endpoint = "https://twitter-picker.netlify.app/api/get-winner-f
 let generate_winner_endpoint = "https://twitter-picker.netlify.app/api/generate-winner-for-bot";
 
 
-// should be taken from .env files (TO DO)
-
-
+// defines the port (where the DM-Sever will be Run)
 const port = process.env.PORT || 3000;
 
 
@@ -201,7 +202,7 @@ function getTweetID(statusLink) {
   }
   return tweetID;
 }
-
+// gets winner information from the fixed api endpoint using tweetID
 async function getQueriedWinnerInfo(tweetID) {
 
   let apiResponse = await fetch(query_winner_endpoint, {
@@ -217,6 +218,7 @@ async function getQueriedWinnerInfo(tweetID) {
   return apiJsonResponse.message;
 }
 
+// generates winner using the fixed api endpoint, for requester, with tweetID
 async function getGeneratedWinnerInfo(tweetID, requesterID) {
 
   let apiResponse = await fetch(generate_winner_endpoint, {
@@ -281,26 +283,28 @@ async function consumeEvent(event) {
       // determines if the bot recieved the message payload
       let recievedMessage = (shouldBeSentTo === messageWasSentTo);
 
+      // If doesn't follow a valid format, reply this to the user
       let reply = "not valid message format";
 
       // if bot recieved a message
       if (recievedMessage) {
 
-        //test
-
-
-
-        // has message text
+        // has message text, has atleast one URL, the URL is a valid tweet link
         if (isValidTweetLink(firstURLOfMessage) && messageContent && messageContent !== "") {
+
+          // gets the first word of the recieved message
           let splittedMessage = messageContent.split(" ");
           let firstWord = splittedMessage[0]?.toLowerCase();
-
+          // gets tweet ID from the tweetLink
           const tweetID = getTweetID(firstURLOfMessage);
+
+          // if the command is pick (generate winner, get generated winner info, reply to the sender)
           if (firstWord === "pick") {
             let messageInfo = await getGeneratedWinnerInfo(tweetID, messageWasSentBy);
             reply = `${messageInfo}`;
             await sendMessage(messageWasSentBy, reply);
           }
+          // if the command is view (query winner, get queried winner info, reply to the sender)
           else if (firstWord === "view") {
             let messageInfo = await getQueriedWinnerInfo(tweetID);
             reply = `${messageInfo}`;
@@ -309,14 +313,14 @@ async function consumeEvent(event) {
           }
 
         }
+        // if not a valid command format
         else {
           await sendMessage(messageWasSentBy, reply);
         }
 
       }
       else {
-        // test 
-        console.log("Sent A message");
+        // other events related to messages that is not recieved message
       }
     }
   }
@@ -327,8 +331,6 @@ async function consumeEvent(event) {
 
 // function, that starts a webhook subscription 
 let startHook = async () => {
-
-
 
   // create autohook instance
   let webhook = new Autohook({
@@ -352,18 +354,15 @@ let startHook = async () => {
   return webhook;
 }
 
-app.get('/start', async (req, res) => {
-  await startHook();
-  res.send("API RUNNING");
-})
 
+// ping to see if the server is running
 app.get('/', async (req, res) => {
   res.send("API PING");
 })
 
 
 
-
+// server starts webhook subscription on initial start
 app.listen(port, async () => {
   await startHook();
   console.log(`Example app listening on port ${port}`)
